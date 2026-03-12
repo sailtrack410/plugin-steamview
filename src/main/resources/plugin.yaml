@@ -1,9 +1,6 @@
-# Refer https://docs.halo.run/developer-guide/plugin/basics/manifest
-
 apiVersion: plugin.halo.run/v1alpha1
 kind: Plugin
 metadata:
-  # The name defines how the plugin is invoked, A unique name
   name: steamview
 spec:
   enabled: true
@@ -13,14 +10,13 @@ spec:
     name: sailtrack410
     website: https://github.com/sailtrack410
   logo: logo.svg
-  homepage: hhttps://github.com/sailtrack410/steam-view#readme
+  homepage: https://github.com/sailtrack410/steam-view#readme
   repo: https://github.com/sailtrack410/steam-view
   issues: https://github.com/sailtrack410/steam-view/issues
   settingName: pluginsteamview-settings
   configMapName: pluginsteamview-configmap
-  displayName: "steam-view"
-  description: "个性化展示个人Steam游戏时长的插件"
+  displayName: "Steam View"
+  description: "个性化展示个人 Steam 游戏时长数据"
   license:
     - name: "GPL-3.0"
       url: "https://github.com/sailtrack410/steam-view/blob/main/LICENSE"
-# trigger rebuild

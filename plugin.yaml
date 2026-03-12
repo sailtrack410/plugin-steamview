@@ -1,25 +1,22 @@
----
-apiVersion: "plugin.halo.run/v1alpha1"
-kind: "Plugin"
+apiVersion: plugin.halo.run/v1alpha1
+kind: Plugin
 metadata:
-  name: "PluginFeed"
-  annotations:
-    store.halo.run/app-id: "app-KhIVw"
+  name: steamview
 spec:
   enabled: true
-  requires: ">=2.21.0"
+  version: "1.0.0"
+  requires: ">=2.22.0"
   author:
-    name: "Halo"
-    website: "https://github.com/halo-dev"
-  logo: "logo.svg"
-  settingName: "plugin-feed-setting"
-  configMapName: "plugin-feed-config"
-  homepage: "https://www.halo.run/store/apps/app-KhIVw"
-  repo: "https://github.com/halo-dev/plugin-feed"
-  issues: "https://github.com/halo-dev/plugin-feed/issues"
-  displayName: "RSS"
-  description: "为站点生成 RSS 订阅链接"
+    name: sailtrack410
+    website: https://github.com/sailtrack410
+  logo: logo.svg
+  homepage: https://github.com/sailtrack410/steam-view#readme
+  repo: https://github.com/sailtrack410/steam-view
+  issues: https://github.com/sailtrack410/steam-view/issues
+  settingName: pluginsteamview-settings
+  configMapName: pluginsteamview-configmap
+  displayName: "Steam View"
+  description: "个性化展示个人 Steam 游戏时长数据"
   license:
-  - name: "GPL-3.0"
-    url: "https://github.com/halo-dev/plugin-feed/blob/main/LICENSE"
-  version: "1.5.0"
+    - name: "GPL-3.0"
+      url: "https://github.com/sailtrack410/steam-view/blob/main/LICENSE"

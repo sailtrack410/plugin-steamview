@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 loading.value = true;
                 error.value = null;
                 try {
-                    const response = await fetch('/steamview/games');
+                    const response = await fetch('/apis/api.steamview.halo.run/v1alpha1/games');
                     if (!response.ok) {
                         const errorText = await response.text();
                         let errorMessage = '加载游戏数据失败';

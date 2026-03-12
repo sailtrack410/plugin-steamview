@@ -1,167 +1,317 @@
 <script setup lang="ts">
 import {
-  VCard,
-  IconRefreshLine,
   Dialog,
+  IconRefreshLine,
+  Toast,
   VButton,
+  VCard,
+  VDropdownItem,
   VEmpty,
+  VEntity,
+  VEntityContainer,
+  VEntityField,
   VLoading,
   VPageHeader,
-  VDropdownItem,
-  Toast,
+  VPagination,
   VSpace,
-  IconAddCircle,
-  IconEye,
-  IconEyeOff,
-  VDropdown,
-} from "@halo-dev/components";
-import { useQuery } from "@tanstack/vue-query";
-import { computed, onMounted, ref } from "vue";
-import { formatTime } from "@/utils/time";
+  VStatusDot,
+} from '@halo-dev/components'
+import { useQuery } from '@tanstack/vue-query'
+import { computed, ref, watch } from 'vue'
+import { utils } from '@halo-dev/ui-shared'
+import {
+  getConsoleGames,
+  hideSteamGame,
+  refreshSteamGames,
+  testSteamConnection,
+  type SteamGameItem,
+  unhideSteamGame,
+} from '@/api/steam'
+import { formatTime } from '@/utils/time'
 
-// 定义组件名称
-defineOptions({
-  name: "SteamGamesManagement"
-});
+const page = ref(1)
+const size = ref(20)
+const keyword = ref('')
+const selectedSort = ref<string | undefined>('twoWeekTime')
+const selectedHidden = ref<string | undefined>()
+const selectedActivity = ref<string | undefined>()
+const checkAll = ref(false)
+const selectedGameIds = ref<string[]>([])
 
-const page = ref(1);
-const size = ref(20);
-const keyword = ref("");
-const searchText = ref("");
-const total = ref(0);
+const refreshing = ref(false)
+const testing = ref(false)
 
-function onKeywordChange() {
-  keyword.value = searchText.value;
-  refetch();
-}
+const canManage = computed(() => utils.permission.has(['plugin:steamview:manage']))
 
-function handleReset() {
-  keyword.value = "";
-  searchText.value = "";
-  refetch();
-}
+const hasFilters = computed(() => {
+  return Boolean(
+    selectedHidden.value ||
+      selectedActivity.value ||
+      (selectedSort.value && selectedSort.value !== 'twoWeekTime'),
+  )
+})
 
-const {
-  data: games,
-  isLoading,
-  isFetching,
-  refetch,
-} = useQuery({
-  queryKey: ["steam-games", page, size, keyword],
-  queryFn: async () => {
-    try {
-      const response = await fetch("/steamview/games");
-      if (!response.ok) {
-        throw new Error("获取游戏数据失败");
-      }
-      const data = await response.json();
-      
-      // 过滤游戏
-      let filteredGames = data.games || [];
-      if (keyword.value) {
-        filteredGames = filteredGames.filter((game: any) => 
-          game.name.toLowerCase().includes(keyword.value.toLowerCase())
-        );
-      }
-      
-      total.value = filteredGames.length;
-      
-      // 分页
-      const start = (page.value - 1) * size.value;
-      const end = start + size.value;
-      
-      return filteredGames.slice(start, end);
-    } catch (error) {
-      console.error("获取游戏列表失败:", error);
-      Toast.error("获取游戏列表失败");
-      return [];
-    }
+const hiddenFilterItems = [
+  { label: '全部', value: undefined },
+  { label: '仅可见', value: 'visible' },
+  { label: '仅隐藏', value: 'hidden' },
+]
+
+const activityFilterItems = [
+  { label: '全部状态', value: undefined },
+  { label: '两周活跃', value: 'active' },
+  { label: '两周未活跃', value: 'inactive' },
+]
+
+const sortItems = [
+  { label: '两周时长优先', value: 'twoWeekTime' },
+  { label: '总时长优先', value: 'totalTime' },
+  { label: '名称 A-Z', value: 'name' },
+  { label: '最近游玩', value: 'lastPlayed' },
+]
+
+const queryKey = computed(() => [
+  'steamview:console:games',
+  page.value,
+  size.value,
+  keyword.value,
+  selectedSort.value ?? 'twoWeekTime',
+  selectedHidden.value ?? 'all',
+  selectedActivity.value ?? 'all',
+])
+
+const { data, isLoading, isFetching, refetch } = useQuery({
+  queryKey,
+  queryFn: () =>
+    getConsoleGames({
+      page: page.value,
+      size: size.value,
+      keyword: keyword.value || undefined,
+      sort: selectedSort.value,
+      hidden: selectedHidden.value,
+      activity: selectedActivity.value,
+    }),
+})
+
+const games = computed(() => data.value?.items || [])
+const total = computed(() => data.value?.total || 0)
+const stats = computed(() =>
+  data.value?.stats || {
+    totalGames: 0,
+    totalTime: 0,
+    twoWeekTime: 0,
+    activeGames: 0,
   },
-});
+)
+const summary = computed(() =>
+  data.value?.summary || {
+    allGames: 0,
+    hiddenGames: 0,
+    visibleGames: 0,
+  },
+)
+const lastUpdated = computed(() => data.value?.lastUpdated || '')
+const ingestedBy = computed(() => data.value?.ingestedBy || 'system')
 
-const handleHideGame = async (game: any) => {
-  Dialog.warning({
-    title: "确认隐藏游戏",
-    description: `确定要隐藏游戏 "${game.name}" 吗？隐藏后该游戏将不会在前端页面显示。`,
-    async onConfirm() {
-      try {
-        // 获取当前隐藏的游戏列表
-        const settingResponse = await fetch("/apis/api.console.halo.run/v1alpha1/plugins/-/settings/pluginsteamview-settings");
-        if (!settingResponse.ok) {
-          throw new Error("获取设置失败");
-        }
-        
-        const settingData = await settingResponse.json();
-        const hiddenGames = settingData.spec.hiddenGames || [];
-        
-        // 添加到隐藏列表
-        if (!hiddenGames.includes(game.appId)) {
-          hiddenGames.push(game.appId);
-        }
-        
-        // 更新设置
-        const updateResponse = await fetch("/apis/api.console.halo.run/v1alpha1/plugins/-/settings/pluginsteamview-settings", {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            spec: {
-              ...settingData.spec,
-              hiddenGames: hiddenGames
-            }
-          })
-        });
-        
-        if (!updateResponse.ok) {
-          throw new Error("更新设置失败");
-        }
-        
-        Toast.success("游戏已隐藏");
-        refetch();
-      } catch (e) {
-        console.error("隐藏游戏失败", e);
-        Toast.error("隐藏游戏失败");
-      }
-    },
-  });
-};
+const selectedGames = computed(() => {
+  const selected = new Set(selectedGameIds.value)
+  return games.value.filter((game) => selected.has(game.appId))
+})
 
-const handleRefresh = async () => {
-  try {
-    const response = await fetch("/steamview/refresh", {
-      method: "POST"
-    });
-    if (!response.ok) {
-      throw new Error("刷新失败");
-    }
-    Toast.success("数据已刷新");
-    refetch();
-  } catch (e) {
-    console.error("刷新失败", e);
-    Toast.error("刷新失败");
-  }
-};
+const clearSelection = () => {
+  selectedGameIds.value = []
+  checkAll.value = false
+}
+
+const handleCheckAllChange = (event: Event) => {
+  const checked = (event.target as HTMLInputElement).checked
+  selectedGameIds.value = checked ? games.value.map((game) => game.appId) : []
+}
+
+const checkSelection = (game: SteamGameItem) => selectedGameIds.value.includes(game.appId)
+
+const handleClearFilters = () => {
+  selectedHidden.value = undefined
+  selectedActivity.value = undefined
+  selectedSort.value = 'twoWeekTime'
+}
 
 const visitFrontend = () => {
-  const currentOrigin = window.location.origin;
-  const frontendUrl = `${currentOrigin}/steamview`;
-  window.open(frontendUrl, "_blank");
-};
+  window.open(`${window.location.origin}/steamview`, '_blank')
+}
+
+const handleRefresh = async () => {
+  if (!canManage.value) {
+    Toast.warning('没有刷新权限')
+    return
+  }
+
+  refreshing.value = true
+  try {
+    const result = await refreshSteamGames()
+    if (result.success) {
+      Toast.success(result.message || '刷新成功')
+    } else {
+      Toast.error(result.message || '刷新失败')
+    }
+    await refetch()
+  } catch (error) {
+    console.error(error)
+    Toast.error('刷新失败')
+  } finally {
+    refreshing.value = false
+  }
+}
+
+const handleTestConnection = async () => {
+  if (!canManage.value) {
+    Toast.warning('没有测试权限')
+    return
+  }
+
+  testing.value = true
+  try {
+    const result = await testSteamConnection()
+    if (result.success) {
+      Toast.success(result.message || '连接成功')
+    } else {
+      Toast.error(result.message || '连接失败')
+    }
+  } catch (error) {
+    console.error(error)
+    Toast.error('连接测试失败')
+  } finally {
+    testing.value = false
+  }
+}
+
+const applyHiddenAction = async (targetGames: SteamGameItem[], hidden: boolean) => {
+  if (!targetGames.length) {
+    Toast.warning(hidden ? '没有可隐藏的游戏' : '没有可取消隐藏的游戏')
+    return
+  }
+
+  const results = await Promise.allSettled(
+    targetGames.map((game) => (hidden ? hideSteamGame(game.appId) : unhideSteamGame(game.appId))),
+  )
+
+  const successCount = results.filter((result) => result.status === 'fulfilled').length
+  const failedCount = results.length - successCount
+
+  if (failedCount === 0) {
+    Toast.success(hidden ? `已隐藏 ${successCount} 个游戏` : `已取消隐藏 ${successCount} 个游戏`)
+  } else {
+    Toast.warning(
+      hidden
+        ? `隐藏完成：成功 ${successCount}，失败 ${failedCount}`
+        : `取消隐藏完成：成功 ${successCount}，失败 ${failedCount}`,
+    )
+  }
+
+  clearSelection()
+  await refetch()
+}
+
+const handleToggleHidden = (game: SteamGameItem, hidden: boolean) => {
+  const title = hidden ? '确认隐藏游戏' : '确认取消隐藏'
+  const description = hidden
+    ? `隐藏后前台不再显示「${game.name}」。`
+    : `取消隐藏后前台会重新显示「${game.name}」。`
+
+  Dialog.warning({
+    title,
+    description,
+    confirmText: '继续',
+    cancelText: '取消',
+    onConfirm: async () => {
+      await applyHiddenAction([game], hidden)
+    },
+  })
+}
+
+const handleHideSelected = () => {
+  const targets = selectedGames.value.filter((game) => !game.hidden)
+  if (!targets.length) {
+    Toast.warning('所选游戏都已经是隐藏状态')
+    return
+  }
+
+  Dialog.warning({
+    title: `批量隐藏（${targets.length}）`,
+    description: '隐藏后前台页面将不会显示这些游戏。',
+    confirmText: '继续',
+    cancelText: '取消',
+    onConfirm: async () => {
+      await applyHiddenAction(targets, true)
+    },
+  })
+}
+
+const handleUnhideSelected = () => {
+  const targets = selectedGames.value.filter((game) => game.hidden)
+  if (!targets.length) {
+    Toast.warning('所选游戏都处于可见状态')
+    return
+  }
+
+  Dialog.warning({
+    title: `批量取消隐藏（${targets.length}）`,
+    description: '取消隐藏后前台页面会重新显示这些游戏。',
+    confirmText: '继续',
+    cancelText: '取消',
+    onConfirm: async () => {
+      await applyHiddenAction(targets, false)
+    },
+  })
+}
+
+const openSteamStore = (appId: string) => {
+  window.open(`https://store.steampowered.com/app/${appId}`, '_blank')
+}
+
+const formatDateTime = (value: string) => {
+  if (!value) {
+    return '-'
+  }
+  try {
+    return utils.date.format(value)
+  } catch {
+    return value
+  }
+}
+
+watch([keyword, selectedSort, selectedHidden, selectedActivity], () => {
+  page.value = 1
+})
+
+watch(
+  () => selectedGameIds.value,
+  (value) => {
+    checkAll.value = games.value.length > 0 && value.length === games.value.length
+  },
+)
+
+watch(
+  () => games.value.map((game) => game.appId).join(','),
+  () => {
+    const visibleIds = new Set(games.value.map((game) => game.appId))
+    selectedGameIds.value = selectedGameIds.value.filter((id) => visibleIds.has(id))
+  },
+)
 </script>
 
 <template>
   <VPageHeader title="Steam 游戏管理">
     <template #actions>
       <VSpace>
-        <VButton
-          type="primary"
-          @click="visitFrontend"
-        >
-          访问前台
+        <VButton @click="visitFrontend">访问前台</VButton>
+        <VButton v-permission="['plugin:steamview:manage']" :loading="testing" @click="handleTestConnection">
+          测试连接
         </VButton>
         <VButton
+          v-permission="['plugin:steamview:manage']"
           type="secondary"
+          :loading="refreshing"
           @click="handleRefresh"
         >
           <template #icon>
@@ -178,30 +328,27 @@ const visitFrontend = () => {
       <template #header>
         <div class="block w-full bg-gray-50 px-4 py-3">
           <div class="relative flex flex-col flex-wrap items-start gap-4 sm:flex-row sm:items-center">
-            <div class="flex w-full flex-1 items-center sm:w-auto">
-              <input
-                v-model="searchText"
-                placeholder="输入游戏名称搜索"
-                type="text"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2"
-                @keyup.enter="onKeywordChange"
-              />
+            <div v-permission="['plugin:steamview:manage']" class="hidden items-center sm:flex">
+              <input v-model="checkAll" type="checkbox" @change="handleCheckAllChange" />
             </div>
+
+            <div class="flex w-full flex-1 items-center sm:w-auto">
+              <SearchInput v-if="!selectedGameIds.length" v-model="keyword" placeholder="搜索游戏名称或 App ID" />
+              <VSpace v-else v-permission="['plugin:steamview:manage']" spacing="sm" class="flex-wrap">
+                <VButton @click="handleHideSelected">批量隐藏</VButton>
+                <VButton @click="handleUnhideSelected">批量取消隐藏</VButton>
+              </VSpace>
+            </div>
+
             <VSpace spacing="lg" class="flex-wrap">
-              <button
-                v-if="keyword"
-                class="inline-flex items-center rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                @click="handleReset"
-              >
-                <span>清除筛选</span>
-              </button>
+              <FilterCleanButton v-if="hasFilters" @click="handleClearFilters" />
+              <FilterDropdown v-model="selectedHidden" label="可见性" :items="hiddenFilterItems" />
+              <FilterDropdown v-model="selectedActivity" label="活跃度" :items="activityFilterItems" />
+              <FilterDropdown v-model="selectedSort" label="排序" :items="sortItems" />
               <div class="flex flex-row gap-2">
-                <div
-                  class="group cursor-pointer rounded p-1 hover:bg-gray-200"
-                  @click="refetch()"
-                >
+                <div class="group cursor-pointer rounded p-1 hover:bg-gray-200" @click="refetch()">
                   <IconRefreshLine
-                    v-tooltip="'刷新'"
+                    v-tooltip="'刷新列表'"
                     :class="{ 'animate-spin text-gray-900': isFetching }"
                     class="h-4 w-4 text-gray-600 group-hover:text-gray-900"
                   />
@@ -211,79 +358,130 @@ const visitFrontend = () => {
           </div>
         </div>
       </template>
-      
+
       <VLoading v-if="isLoading" />
 
-      <Transition v-else-if="!games?.length" appear name="fade">
-        <VEmpty
-          message="暂无游戏数据"
-          title="暂无游戏数据"
-        >
+      <Transition v-else-if="!games.length" appear name="fade">
+        <VEmpty title="暂无游戏数据" message="请先配置 Steam API Key 与 Steam ID，然后点击刷新。">
           <template #actions>
             <VSpace>
-              <VButton @click="refetch()"> 刷新 </VButton>
+              <VButton @click="refetch()">刷新</VButton>
             </VSpace>
           </template>
         </VEmpty>
       </Transition>
 
       <Transition v-else appear name="fade">
-        <div class="w-full relative overflow-x-auto">
-          <table class="w-full text-sm text-left text-gray-500 widefat">
-            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-              <tr>
-                <th scope="col" class="px-4 py-3"><div class="w-max flex items-center">封面 </div></th>
-                <th scope="col" class="px-4 py-3"><div class="w-max flex items-center">游戏名称 </div></th>
-                <th scope="col" class="px-4 py-3"><div class="w-max flex items-center">总时长 </div></th>
-                <th scope="col" class="px-4 py-3"><div class="w-max flex items-center">两周时长 </div></th>
-                <th scope="col" class="px-4 py-3"><div class="w-max flex items-center">最后游玩 </div></th>
-                <th scope="col" class="px-4 py-3"><div class="w-max flex items-center">操作 </div></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="game in games" :key="game.appId" class="border-b last:border-none hover:bg-gray-100">
-                <td class="px-4 py-4">
-                  <img :src="game.coverUrl" :alt="game.name" class="game-cover">
-                </td>
-                <td class="px-4 py-4 font-medium text-gray-900">{{game.name}}</td>
-                <td class="px-4 py-4">{{formatTime(game.totalTime)}}</td>
-                <td class="px-4 py-4">{{formatTime(game.twoWeekTime)}}</td>
-                <td class="px-4 py-4">{{game.lastPlayed}}</td>
-                <td class="px-4 py-4">
-                  <VButton
-                    type="secondary"
-                    size="small"
-                    @click="handleHideGame(game)"
-                  >
-                    隐藏
-                  </VButton>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <VEntityContainer>
+          <VEntity v-for="game in games" :key="game.appId" :is-selected="checkSelection(game)">
+            <template #checkbox>
+              <input
+                v-permission="['plugin:steamview:manage']"
+                v-model="selectedGameIds"
+                :value="game.appId"
+                name="game-checkbox"
+                type="checkbox"
+              />
+            </template>
+
+            <template #start>
+              <VEntityField>
+                <template #title>
+                  <div class="flex min-w-0 items-center gap-3">
+                    <img :src="game.coverUrl" :alt="game.name" class="steam-cover" />
+                    <div class="min-w-0">
+                      <div class="truncate font-semibold text-gray-900">{{ game.name }}</div>
+                      <div class="text-xs text-gray-500">App ID: {{ game.appId }}</div>
+                    </div>
+                  </div>
+                </template>
+                <template #description>
+                  <div class="mt-1 text-xs text-gray-500">入库人：{{ ingestedBy }}</div>
+                </template>
+              </VEntityField>
+            </template>
+
+            <template #end>
+              <VEntityField>
+                <template #description>
+                  <VStatusDot
+                    :state="game.hidden ? 'warning' : 'success'"
+                    :text="game.hidden ? '隐藏' : '可见'"
+                    :animate="false"
+                  />
+                </template>
+              </VEntityField>
+              <VEntityField>
+                <template #description>
+                  <span class="text-xs text-gray-700">总时长 {{ formatTime(game.totalTime) }}</span>
+                </template>
+              </VEntityField>
+              <VEntityField>
+                <template #description>
+                  <span class="text-xs text-gray-700">两周 {{ formatTime(game.twoWeekTime) }}</span>
+                </template>
+              </VEntityField>
+              <VEntityField>
+                <template #description>
+                  <span class="text-xs tabular-nums text-gray-500">
+                    {{
+                      game.lastPlayedAt > 0
+                        ? formatDateTime(new Date(game.lastPlayedAt * 1000).toISOString())
+                        : game.lastPlayed
+                    }}
+                  </span>
+                </template>
+              </VEntityField>
+            </template>
+
+            <template #dropdownItems>
+              <VDropdownItem @click="openSteamStore(game.appId)">打开 Steam 商店页</VDropdownItem>
+              <VDropdownItem
+                v-if="!game.hidden"
+                v-permission="['plugin:steamview:manage']"
+                @click="handleToggleHidden(game, true)"
+              >
+                隐藏
+              </VDropdownItem>
+              <VDropdownItem
+                v-else
+                v-permission="['plugin:steamview:manage']"
+                @click="handleToggleHidden(game, false)"
+              >
+                取消隐藏
+              </VDropdownItem>
+            </template>
+          </VEntity>
+        </VEntityContainer>
       </Transition>
 
       <template #footer>
-        <div class="px-4 py-3 bg-gray-50 border-t border-gray-200">
-          <div class="text-sm text-gray-600">
-            共 {{total}} 个游戏
+        <div class="space-y-3 px-4 py-3">
+          <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500">
+            <span>总游戏 {{ summary.allGames }}，隐藏 {{ summary.hiddenGames }}，可见 {{ summary.visibleGames }}</span>
+            <span>最近更新：{{ formatDateTime(lastUpdated) }}</span>
           </div>
+          <VPagination
+            v-model:page="page"
+            v-model:size="size"
+            :total="total"
+            page-label="页"
+            size-label="条 / 页"
+            :size-options="[20, 50, 100]"
+            :total-label="`共 ${total} 个游戏，活跃 ${stats.activeGames} 个`"
+          />
         </div>
       </template>
     </VCard>
   </div>
 </template>
 
-<style scoped lang="scss">
-.widefat * {
-  word-wrap: break-word;
-}
-
-.game-cover {
-  width: 80px;
-  height: 40px;
-  border-radius: 4px;
+<style scoped>
+.steam-cover {
+  width: 96px;
+  height: 45px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
   object-fit: cover;
 }
 </style>

@@ -185,7 +185,7 @@ steam-view/
 │   │   ├── assets/
 │   │   │   └── steamview.css   # 样式文件
 │   │   ├── views/
-│   │   │   └── HomeView.vue    # 主页面组件
+│   │   │   └── Games.vue       # 控制台管理页面
 │   │   └── index.ts            # 入口文件
 │   └── package.json
 ├── word/                        # 项目文档

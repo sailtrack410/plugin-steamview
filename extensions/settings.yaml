@@ -1,40 +1,71 @@
 apiVersion: v1alpha1
 kind: Setting
 metadata:
-  name: plugin-feed-setting
+  name: pluginsteamview-settings
 spec:
   forms:
-    - group: basic
+    - group: base
       label: 基本设置
       formSchema:
-        - $formkit: checkbox
-          name: enableCategories
-          label: 开启单个分类的订阅链接
-          value: true
+        - $formkit: text
+          name: steamApiKey
+          label: Steam API Key
           validation: required
-        - $formkit: checkbox
-          name: enableAuthors
-          label: 开启单个作者的订阅链接
-          value: true
+          help: 在 https://steamcommunity.com/dev/apikey 获取 API Key
+        - $formkit: text
+          name: steamId
+          label: Steam ID
           validation: required
-        - $formkit: radio
-          name: descriptionType
-          label: 内容输出类型
-          value: excerpt
+          help: 17 位数字 ID，可在 Steam 主页 URL 中获取
+        - $formkit: checkbox
+          name: proxyEnabled
+          label: 启用代理（可选）
+          value: false
+          help: 启用后，后端请求 Steam 指定域名时会通过代理转发
+        - $formkit: text
+          name: proxyAddress
+          label: 代理地址
+          placeholder: http://127.0.0.1:7890 或 socks5://127.0.0.1:7891
+          help: 支持 HTTP/SOCKS5；不填则不生效
+        - $formkit: textarea
+          name: proxyDomains
+          label: 需要代理的域名
+          value: |
+            api.steampowered.com,
+            store.steampowered.com,
+            steamcommunity.com
+          help: 逗号分隔，通常保持默认即可
+        - $formkit: text
+          name: proxyUsername
+          label: 代理用户名（可选）
+        - $formkit: password
+          name: proxyPassword
+          label: 代理密码（可选）
+        - $formkit: select
+          name: refreshInterval
+          label: 数据刷新频率
+          value: 24
           options:
-            - value: excerpt
-              label: 摘要
-            - value: content
-              label: 全文
-          validation: required
-        - $formkit: number
-          name: outputNum
-          label: 内容输出条数
-          value: 20
-          validation: required|number|min:1
-        - $formkit: code
-          name: rssExtraTags
-          label: 注入额外的 RSS 标签
-          value: ""
-          height: 150px
-          language: html
+            - label: 1 小时
+              value: 1
+            - label: 6 小时
+              value: 6
+            - label: 12 小时
+              value: 12
+            - label: 24 小时
+              value: 24
+          help: 到期后会自动重新拉取 Steam 数据
+    - group: advanced
+      label: 高级设置
+      formSchema:
+        - $formkit: list
+          name: hiddenGames
+          label: 默认隐藏游戏 App ID
+          addLabel: 添加 App ID
+          help: 这里的游戏将不会在前台页面展示
+          itemType: string
+          children:
+            - $formkit: text
+              index: $index
+              validation: required
+              placeholder: 例如 730

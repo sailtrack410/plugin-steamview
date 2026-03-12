@@ -1,14 +1,46 @@
 apiVersion: v1alpha1
 kind: Role
 metadata:
-  name: template-feed-public-apis
+  name: role-template-steamview-view
+  labels:
+    halo.run/role-template: "true"
+  annotations:
+    rbac.authorization.halo.run/module: "Steam View"
+    rbac.authorization.halo.run/display-name: "Steam 游戏查看"
+    rbac.authorization.halo.run/ui-permissions: '["plugin:steamview:view"]'
+rules:
+  - apiGroups: ["console.api.steamview.halo.run"]
+    resources: ["games"]
+    verbs: ["get", "list"]
+---
+apiVersion: v1alpha1
+kind: Role
+metadata:
+  name: role-template-steamview-manage
+  labels:
+    halo.run/role-template: "true"
+  annotations:
+    rbac.authorization.halo.run/module: "Steam View"
+    rbac.authorization.halo.run/display-name: "Steam 游戏管理"
+    rbac.authorization.halo.run/dependencies: '["role-template-steamview-view"]'
+    rbac.authorization.halo.run/ui-permissions: '["plugin:steamview:manage"]'
+rules:
+  - apiGroups: ["console.api.steamview.halo.run"]
+    resources: ["games/refresh", "games/*/hide", "connection/test"]
+    verbs: ["create", "delete", "get"]
+---
+apiVersion: v1alpha1
+kind: Role
+metadata:
+  name: role-template-anonymous-steamview-public
   labels:
     halo.run/role-template: "true"
     halo.run/hidden: "true"
     rbac.authorization.halo.run/aggregate-to-anonymous: "true"
   annotations:
-    rbac.authorization.halo.run/display-name: "获取订阅源列表"
+    rbac.authorization.halo.run/module: "Steam View"
+    rbac.authorization.halo.run/display-name: "Steam 游戏公开读取"
 rules:
-  - apiGroups: [ "api.feed.halo.run" ]
-    resources: [ "rss-sources" ]
-    verbs: [ "list" ]
+  - apiGroups: ["api.steamview.halo.run"]
+    resources: ["games"]
+    verbs: ["get", "list"]
