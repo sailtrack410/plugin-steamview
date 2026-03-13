@@ -7,10 +7,10 @@ spec:
   version: "1.0.0"
   requires: ">=2.22.0"
   author:
-    name: sailtrack410
-    website: https://github.com/sailtrack410
+    name: sailtrack410&Handsome
+    website: https://www.sailtrack.cn
   logo: logo.svg
-  homepage: https://github.com/sailtrack410/steam-view#readme
+  homepage: https://www.sailtrack.cn
   repo: https://github.com/sailtrack410/steam-view
   issues: https://github.com/sailtrack410/steam-view/issues
   settingName: pluginsteamview-settings

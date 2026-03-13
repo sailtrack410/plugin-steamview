@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -28,18 +29,18 @@ public class SteamViewConfigService {
     private static final String CONFIG_MAP_NAME = "pluginsteamview-configmap";
     private static final String HIDDEN_GAMES_KEY = "hiddenGames";
 
-    private static final String PROXY_ENABLED_KEY = "proxyEnabled";
-    private static final String PROXY_ADDRESS_KEY = "proxyAddress";
-    private static final String PROXY_USERNAME_KEY = "proxyUsername";
-    private static final String PROXY_PASSWORD_KEY = "proxyPassword";
-    private static final String PROXY_DOMAINS_KEY = "proxyDomains";
+    private static final String PROXY_DOMAIN_API_KEY = "proxyDomainApi";
+    private static final String PROXY_DOMAIN_STORE_KEY = "proxyDomainStore";
+    private static final String PROXY_DOMAIN_COMMUNITY_KEY = "proxyDomainCommunity";
+    private static final String STEAM_API_BASE_KEY = "steamApiBase";
+    private static final String STEAM_STORE_BASE_KEY = "steamStoreBase";
 
-    private static final List<String> DEFAULT_PROXY_DOMAINS = List.of(
-        "api.steampowered.com",
-        "store.steampowered.com",
-        "steamcommunity.com"
-    );
-
+    private static final String DEFAULT_STEAM_API_BASE = "https://api.steampowered.com";
+    private static final String DEFAULT_STEAM_STORE_BASE = "https://store.steampowered.com";
+    private static final String DEFAULT_STEAM_COMMUNITY_BASE = "https://steamcommunity.com";
+    private static final String DEFAULT_API_DOMAIN = "api.steampowered.com";
+    private static final String DEFAULT_STORE_DOMAIN = "store.steampowered.com";
+    private static final String DEFAULT_COMMUNITY_DOMAIN = "steamcommunity.com";
     private final ReactiveSettingFetcher settingFetcher;
     private final ReactiveExtensionClient extensionClient;
     private final ObjectMapper objectMapper;
@@ -63,21 +64,42 @@ public class SteamViewConfigService {
         return getIntegerSettingValue(BASE_GROUP, "refreshInterval", 24);
     }
 
-    public Mono<SteamProxyConfig> getSteamProxyConfig() {
-        return Mono.zip(
-                getBooleanSettingValue(BASE_GROUP, PROXY_ENABLED_KEY, false),
-                getSettingValue(BASE_GROUP, PROXY_ADDRESS_KEY),
-                getSettingValue(BASE_GROUP, PROXY_USERNAME_KEY),
-                getSettingValue(BASE_GROUP, PROXY_PASSWORD_KEY),
-                getSettingValue(BASE_GROUP, PROXY_DOMAINS_KEY)
-            )
-            .map(tuple -> new SteamProxyConfig(
-                tuple.getT1(),
-                tuple.getT2(),
-                tuple.getT3(),
-                tuple.getT4(),
-                parseProxyDomains(tuple.getT5())
-            ));
+    public Mono<String> getSteamApiBase() {
+        return getSettingValue(BASE_GROUP, PROXY_DOMAIN_API_KEY)
+            .flatMap(value -> {
+                if (StringUtils.hasText(value)) {
+                    String domain = normalizeDomain(value, DEFAULT_API_DOMAIN);
+                    return Mono.just("https://" + domain);
+                }
+                return getSettingValue(BASE_GROUP, STEAM_API_BASE_KEY)
+                    .map(base -> normalizeBaseUrl(base, DEFAULT_STEAM_API_BASE));
+            })
+            .defaultIfEmpty(DEFAULT_STEAM_API_BASE);
+    }
+
+    public Mono<String> getSteamStoreBase() {
+        return getSettingValue(BASE_GROUP, PROXY_DOMAIN_STORE_KEY)
+            .flatMap(value -> {
+                if (StringUtils.hasText(value)) {
+                    String domain = normalizeDomain(value, DEFAULT_STORE_DOMAIN);
+                    return Mono.just("https://" + domain);
+                }
+                return getSettingValue(BASE_GROUP, STEAM_STORE_BASE_KEY)
+                    .map(base -> normalizeBaseUrl(base, DEFAULT_STEAM_STORE_BASE));
+            })
+            .defaultIfEmpty(DEFAULT_STEAM_STORE_BASE);
+    }
+
+    public Mono<String> getSteamCommunityBase() {
+        return getSettingValue(BASE_GROUP, PROXY_DOMAIN_COMMUNITY_KEY)
+            .flatMap(value -> {
+                if (StringUtils.hasText(value)) {
+                    String domain = normalizeDomain(value, DEFAULT_COMMUNITY_DOMAIN);
+                    return Mono.just("https://" + domain);
+                }
+                return Mono.just(DEFAULT_STEAM_COMMUNITY_BASE);
+            })
+            .defaultIfEmpty(DEFAULT_STEAM_COMMUNITY_BASE);
     }
 
     public Mono<List<String>> getHiddenGames() {
@@ -214,28 +236,6 @@ public class SteamViewConfigService {
         }
     }
 
-    private List<String> parseProxyDomains(String rawValue) {
-        if (!StringUtils.hasText(rawValue)) {
-            return DEFAULT_PROXY_DOMAINS;
-        }
-
-        String normalized = rawValue
-            .replace("\n", ",")
-            .replace(";", ",")
-            .trim();
-
-        String[] split = normalized.split(",");
-        List<String> domains = new ArrayList<>();
-        for (String item : split) {
-            String domain = item.trim();
-            if (StringUtils.hasText(domain)) {
-                domains.add(domain);
-            }
-        }
-
-        return domains.isEmpty() ? DEFAULT_PROXY_DOMAINS : domains;
-    }
-
     private Mono<String> getSettingValue(String group, String key) {
         return settingFetcher.get(group)
             .map(groupValues -> {
@@ -272,18 +272,56 @@ public class SteamViewConfigService {
             .defaultIfEmpty(defaultValue);
     }
 
-    private Mono<Boolean> getBooleanSettingValue(String group, String key, boolean defaultValue) {
-        return getSettingValue(group, key)
-            .map(value -> {
-                if (!StringUtils.hasText(value)) {
-                    return defaultValue;
-                }
-                return Boolean.parseBoolean(value.trim());
-            })
-            .defaultIfEmpty(defaultValue);
-    }
-
     private String normalizeAppId(String appId) {
         return appId == null ? "" : appId.trim();
+    }
+
+    private String normalizeBaseUrl(String value, String defaultValue) {
+        if (!StringUtils.hasText(value)) {
+            return defaultValue;
+        }
+
+        String normalized = value.trim();
+        if (normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+
+        if (!normalized.startsWith("http://") && !normalized.startsWith("https://")) {
+            return defaultValue;
+        }
+
+        return normalized;
+    }
+
+    private String normalizeDomain(String value, String defaultValue) {
+        if (!StringUtils.hasText(value)) {
+            return defaultValue;
+        }
+
+        String normalized = value.trim().toLowerCase();
+        if (normalized.startsWith("http://") || normalized.startsWith("https://")) {
+            try {
+                URI uri = URI.create(normalized);
+                normalized = uri.getHost();
+            } catch (Exception ignored) {
+                return defaultValue;
+            }
+        }
+
+        if (normalized.startsWith("*.")) {
+            normalized = normalized.substring(2);
+        }
+
+        int slashIndex = normalized.indexOf('/');
+        if (slashIndex > -1) {
+            normalized = normalized.substring(0, slashIndex);
+        }
+
+        int colonIndex = normalized.indexOf(':');
+        if (colonIndex > -1) {
+            normalized = normalized.substring(0, colonIndex);
+        }
+
+        return StringUtils.hasText(normalized) ? normalized : defaultValue;
     }
 }

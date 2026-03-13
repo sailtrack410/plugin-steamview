@@ -2,6 +2,7 @@ import { definePlugin } from "@halo-dev/console-shared";
 import Games from "./views/Games.vue";
 import RiGamepadLine from "~icons/ri/gamepad-line";
 import { markRaw } from "vue";
+import { SteamGamesBlockExtension } from "./editor";
 
 export default definePlugin({
   components: {},
@@ -26,5 +27,9 @@ export default definePlugin({
       },
     },
   ],
-  extensionPoints: {},
+  extensionPoints: {
+    "default:editor:extension:create": () => {
+      return [SteamGamesBlockExtension];
+    },
+  },
 });

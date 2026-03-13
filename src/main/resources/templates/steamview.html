@@ -1,14 +1,43 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="color-scheme-auto" data-color-scheme="auto">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Steam View - 游戏时长统计</title>
-  <link rel="stylesheet" type="text/css" href="/plugins/steamview/assets/static/style.css" />
+  <title>Steam View - Steam 游戏展示</title>
 </head>
-<body>
-  <div id="steamview-page"></div>
-  <script src="https://unpkg.com/vue@3/dist/vue.global.js" defer></script>
-  <script type="text/javascript" src="/plugins/steamview/assets/static/app.js" defer></script>
+<body class="color-scheme-auto" data-color-scheme="auto">
+  <steam-games-view
+    id="steam-games-view"
+    api-base="/apis/api.steamview.halo.run/v1alpha1/games"
+    title="Steam 游戏展柜"
+    subtitle="最近游玩、总时长与活跃状态"
+  ></steam-games-view>
+  <script>
+    (function () {
+      var element = document.getElementById('steam-games-view');
+      if (!element) {
+        return;
+      }
+      var params = new URLSearchParams(window.location.search);
+      var mode = params.get('mode');
+      var appId = params.get('appId');
+      var showProfile = params.get('showProfile');
+      var embedded = params.get('embedded');
+
+      if (mode === 'single' || mode === 'all') {
+        element.setAttribute('mode', mode);
+      }
+      if (appId) {
+        element.setAttribute('app-id', appId);
+      }
+      if (showProfile === 'false') {
+        element.showProfile = false;
+      }
+      if (embedded === '1') {
+        element.embedded = true;
+      }
+    })();
+  </script>
+  <script type="text/javascript" src="/plugins/steamview/assets/static/steam-games.umd.js" defer></script>
 </body>
 </html>

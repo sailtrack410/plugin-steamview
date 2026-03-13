@@ -112,6 +112,26 @@ const summary = computed(() =>
 )
 const lastUpdated = computed(() => data.value?.lastUpdated || '')
 const ingestedBy = computed(() => data.value?.ingestedBy || 'system')
+const player = computed(() => {
+  return (
+    data.value?.player || {
+      steamId: '',
+      personaName: '',
+      profileUrl: '',
+      avatar: '',
+      avatarMedium: '',
+      avatarFull: '',
+      level: 0,
+      badgeCount: 0,
+      playerXp: 0,
+      badges: [],
+    }
+  )
+})
+const playerName = computed(() => player.value.personaName || 'Steam 玩家')
+const playerAvatar = computed(
+  () => player.value.avatarFull || player.value.avatarMedium || player.value.avatar || '',
+)
 
 const selectedGames = computed(() => {
   const selected = new Set(selectedGameIds.value)
@@ -138,6 +158,12 @@ const handleClearFilters = () => {
 
 const visitFrontend = () => {
   window.open(`${window.location.origin}/steamview`, '_blank')
+}
+
+const openPlayerProfile = () => {
+  if (player.value.profileUrl) {
+    window.open(player.value.profileUrl, '_blank')
+  }
 }
 
 const handleRefresh = async () => {
@@ -324,6 +350,25 @@ watch(
   </VPageHeader>
 
   <div class="m-0 md:m-4">
+    <VCard class="mb-4">
+      <div class="flex flex-wrap items-center justify-between gap-4 px-4 py-3">
+        <div class="flex min-w-0 items-center gap-3">
+          <img v-if="playerAvatar" :src="playerAvatar" :alt="playerName" class="player-avatar" />
+          <div v-else class="player-avatar player-avatar-fallback" aria-hidden="true">
+            {{ playerName.slice(0, 1).toUpperCase() }}
+          </div>
+          <div class="min-w-0">
+            <div class="truncate text-sm font-semibold text-gray-900">{{ playerName }}</div>
+            <div class="mt-1 text-xs text-gray-500">
+              SteamID: {{ player.steamId || '-' }} · 等级 Lv.{{ player.level || 0 }} · 徽章
+              {{ player.badgeCount || 0 }}
+            </div>
+          </div>
+        </div>
+        <VButton v-if="player.profileUrl" size="sm" @click="openPlayerProfile">打开 Steam 主页</VButton>
+      </div>
+    </VCard>
+
     <VCard :body-class="['!p-0']">
       <template #header>
         <div class="block w-full bg-gray-50 px-4 py-3">
@@ -346,13 +391,18 @@ watch(
               <FilterDropdown v-model="selectedActivity" label="活跃度" :items="activityFilterItems" />
               <FilterDropdown v-model="selectedSort" label="排序" :items="sortItems" />
               <div class="flex flex-row gap-2">
-                <div class="group cursor-pointer rounded p-1 hover:bg-gray-200" @click="refetch()">
+                <button
+                  type="button"
+                  class="group cursor-pointer rounded border-0 bg-transparent p-1 hover:bg-gray-200"
+                  aria-label="刷新列表"
+                  @click="refetch()"
+                >
                   <IconRefreshLine
                     v-tooltip="'刷新列表'"
                     :class="{ 'animate-spin text-gray-900': isFetching }"
                     class="h-4 w-4 text-gray-600 group-hover:text-gray-900"
                   />
-                </div>
+                </button>
               </div>
             </VSpace>
           </div>
@@ -483,5 +533,23 @@ watch(
   border-radius: 6px;
   border: 1px solid #e5e7eb;
   object-fit: cover;
+}
+
+.player-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  border: 1px solid #d1d5db;
+  object-fit: cover;
+}
+
+.player-avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #eef2ff 0%, #dbeafe 100%);
+  color: #1f2937;
+  font-size: 14px;
+  font-weight: 700;
 }
 </style>
