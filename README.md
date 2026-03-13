@@ -4,6 +4,13 @@
 
 ![Steam View](./src/main/resources/logo.svg)
 
+
+## 🌐 演示与交流
+
+- **演示站点1**：[https://www.xhhao.com/](https://www.xhhao.com/)
+- **文档**：[https://docs.lik.cc/](https://docs.lik.cc/)
+- **QQ 交流群**：[![QQ群](https://www.xhhao.com/upload/iShot_2025-03-03_16.03.00.png)](https://www.xhhao.com/upload/iShot_2025-03-03_16.03.00.png)
+
 ## ✨ 功能特性
 
 - 🎮 **游戏数据展示**
@@ -38,11 +45,6 @@
   - 隐藏游戏功能
   - 测试连接功能
 
-## 📸 截图
-
-![主页面](.github/screenshots/main.png)
-![统计面板](.github/screenshots/dashboard.png)
-![游戏列表](.github/screenshots/games.png)
 
 ## 🚀 快速开始
 
@@ -185,7 +187,7 @@ steam-view/
 │   │   ├── assets/
 │   │   │   └── steamview.css   # 样式文件
 │   │   ├── views/
-│   │   │   └── HomeView.vue    # 主页面组件
+│   │   │   └── Games.vue       # 控制台管理页面
 │   │   └── index.ts            # 入口文件
 │   └── package.json
 ├── word/                        # 项目文档

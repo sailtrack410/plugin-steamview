@@ -1,5 +1,6 @@
 package www.sailtrack.cn.steamview;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import run.halo.app.plugin.BasePlugin;
 import run.halo.app.plugin.PluginContext;
@@ -12,6 +13,7 @@ import run.halo.app.plugin.PluginContext;
  * @author miku_0410
  * @since 1.0.0
  */
+@Slf4j
 @Component
 public class SteamViewPlugin extends BasePlugin {
 
@@ -21,11 +23,11 @@ public class SteamViewPlugin extends BasePlugin {
 
     @Override
     public void start() {
-        System.out.println("插件启动成功！");
+        log.info("Steam View 插件启动完成");
     }
 
     @Override
     public void stop() {
-        System.out.println("插件停止！");
+        log.info("Steam View 插件已停止");
     }
 }

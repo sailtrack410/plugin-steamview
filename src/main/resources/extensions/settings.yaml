@@ -7,136 +7,84 @@ spec:
     - group: base
       label: 基本设置
       formSchema:
-        - $formkit: text
-          label: Steam API Key
-          name: steamApiKey
-          validation: required
-          help: 在 https://steamcommunity.com/dev/apikey 获取您的 API Key
-        - $formkit: text
-          label: Steam ID
-          name: steamId
-          validation: required
-          help: 您的 Steam ID（17位数字），Steam个人主页URL地址中的数字
         - $el: div
           attrs:
-            class: formkit-actions
+            class: "text-sm"
+            style: |
+              margin-bottom: 1rem;
+              margin-top: -0.5rem;
+              padding: 0.75rem 1rem;
+              background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+              border-radius: 0.5rem;
+              border: 1px solid #bae6fd;
           children:
-            - $el: script
+            - $el: div
               attrs:
-                type: text/javascript
-              children: |
-                async function testSteamConnection() {
-                  const btn = document.getElementById('testSteamBtn');
-                  const btnText = document.getElementById('testSteamBtnText');
-                  btn.disabled = true;
-                  const oldText = btnText.textContent;
-                  btnText.textContent = '测试中...';
-                  try {
-                    const response = await fetch('/steamview/test', {
-                      method: 'GET',
-                      headers: {
-                        'Content-Type': 'application/json',
-                      },
-                    });
-                    if (!response.ok) {
-                      throw new Error('测试失败');
-                    }
-                    const result = await response.json();
-                    if (result.success) {
-                      // 成功提示
-                      showNotification('success', result.message || '连接成功！');
-                    } else {
-                      // 失败提示
-                      showNotification('error', result.message || '连接失败！');
-                    }
-                  } catch (err) {
-                    showNotification('error', '测试失败：' + err.message);
-                  } finally {
-                    btn.disabled = false;
-                    btnText.textContent = oldText;
-                  }
-                }
-
-                function showNotification(type, message) {
-                  // 创建通知元素
-                  const notification = document.createElement('div');
-                  notification.style.cssText = `
-                    position: fixed;
-                    top: 20px;
-                    right: 20px;
-                    padding: 12px 24px;
-                    background: ${type === 'success' ? 'linear-gradient(135deg, #67c23a, #85ce61)' : 'linear-gradient(135deg, #f56c6c, #f78989)'};
-                    color: white;
-                    border-radius: 8px;
-                    font-weight: 600;
-                    font-size: 14px;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-                    z-index: 10000;
-                    animation: slideIn 0.3s ease;
-                    max-width: 400px;
-                  `;
-                  notification.textContent = message;
-                  
-                  // 添加动画样式
-                  if (!document.getElementById('notification-style')) {
-                    const style = document.createElement('style');
-                    style.id = 'notification-style';
-                    style.textContent = `
-                      @keyframes slideIn {
-                        from {
-                          transform: translateX(100%);
-                          opacity: 0;
-                        }
-                        to {
-                          transform: translateX(0);
-                          opacity: 1;
-                        }
-                      }
-                      @keyframes slideOut {
-                        from {
-                          transform: translateX(0);
-                          opacity: 1;
-                        }
-                        to {
-                          transform: translateX(100%);
-                          opacity: 0;
-                        }
-                      }
-                    `;
-                    document.head.appendChild(style);
-                  }
-                  
-                  document.body.appendChild(notification);
-                  
-                  // 3秒后移除
-                  setTimeout(() => {
-                    notification.style.animation = 'slideOut 0.3s ease';
-                    setTimeout(() => {
-                      document.body.removeChild(notification);
-                    }, 300);
-                  }, 3000);
-                }
-            - $el: button
-              attrs:
-                type: button
-                id: testSteamBtn
-                onclick: "testSteamConnection()"
-                class: "btn-md btn-primary btn flex items-center gap-2"
+                style: |
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                  flex-wrap: wrap;
+                  gap: 0.5rem;
               children:
                 - $el: span
                   attrs:
-                    id: testSteamBtnIcon
-                    class: "hidden"
-                - $el: span
+                    style: "color: #0369a1;"
+                  children: "💬 遇到问题？加入 QQ 群 766203360 获取帮助"
+                - $el: div
                   attrs:
-                    id: testSteamBtnText
-                  children: 测试 Steam 连接
-            - $el: div
-              attrs:
-                class: "formkit-help text-xs text-gray-500"
-                style:
-                  marginTop: "8px"
-              children: "点击测试按钮验证配置是否正确"
+                    style: "display: flex; gap: 0.5rem;"
+                  children:
+                    - $el: a
+                      attrs:
+                        href: "https://qm.qq.com/q/mPJeUOtG5G"
+                        target: "_blank"
+                        style: |
+                          color: #fff;
+                          background: #0ea5e9;
+                          padding: 0.25rem 0.75rem;
+                          border-radius: 0.25rem;
+                          text-decoration: none;
+                          font-size: 0.75rem;
+                      children: "加入群聊"
+                    - $el: button
+                      attrs:
+                        type: "button"
+                        onclick: "navigator.clipboard.writeText('766203360').then(() => alert('已复制'))"
+                        style: |
+                          color: #0369a1;
+                          background: #fff;
+                          padding: 0.25rem 0.75rem;
+                          border-radius: 0.25rem;
+                          border: 1px solid #7dd3fc;
+                          cursor: pointer;
+                          font-size: 0.75rem;
+                      children: "复制群号"
+        - $formkit: text
+          name: steamApiKey
+          label: Steam API Key
+          validation: required
+          help: 在 https://steamcommunity.com/dev/apikey 获取 API Key
+        - $formkit: text
+          name: steamId
+          label: Steam ID
+          validation: required
+          help: 17 位数字 ID，可在 Steam 主页 URL 中获取
+        - $formkit: text
+          name: proxyDomainApi
+          label: API 域名
+          value: api.steampowered.com
+          help: 可填写你的反向代理域名，例如 steam-api.example.com
+        - $formkit: text
+          name: proxyDomainStore
+          label: Store 域名
+          value: store.steampowered.com
+          help: 可填写你的反向代理域名，例如 steam-store.example.com
+        - $formkit: text
+          name: proxyDomainCommunity
+          label: Community 域名
+          value: steamcommunity.com
+          help: 可填写你的反向代理域名
         - $formkit: select
           name: refreshInterval
           label: 数据刷新频率
@@ -146,20 +94,22 @@ spec:
               value: 1
             - label: 6 小时
               value: 6
+            - label: 12 小时
+              value: 12
             - label: 24 小时
               value: 24
-          help: 设置游戏数据的自动刷新频率
+          help: 到期后会自动重新拉取 Steam 数据
     - group: advanced
-      label: 游戏过滤
+      label: 高级设置
       formSchema:
         - $formkit: list
           name: hiddenGames
-          label: 隐藏的游戏
-          addLabel: 添加游戏
-          help: 在这里添加要隐藏的游戏 App ID，这些游戏不会在前端页面显示
+          label: 默认隐藏游戏 App ID
+          addLabel: 添加 App ID
+          help: 这里的游戏将不会在前台页面展示
           itemType: string
           children:
             - $formkit: text
-              index: "$index"
+              index: $index
               validation: required
-              placeholder: 请输入游戏 App ID
+              placeholder: 例如 730
