@@ -302,6 +302,36 @@ steam-view/
 - 🎨 赛博朋克风格界面
 - 📱 响应式设计
 
+### v1.1.0 (2026-03-14)
+
+- 在reverseProxy.yaml中添加了控制台管理路径
+
+- 更新了app.ts中的API端点以获取游戏数据
+
+- 在README.md中将HomeView.vue重命名为Games.vue以提高清晰度
+
+- 改进了SteamViewPlugin.java中的日志记录以处理插件生命周期事件
+
+- 更新了plugin.yaml，包含正确的主页URL和描述
+
+- 重构了roleTemplates.yaml以定义Steam View的新角色
+
+- 在settings.yaml中添加了额外的配置选项以设置代理设置
+
+- 简化了GameCacheService.java以优化缓存管理
+
+- 改进了SteamViewConfigService.java以处理隐藏游戏和代理配置
+
+- 更新了SteamApiService.java以支持API请求的代理设置
+
+- 重构了整体代码设计
+
+- 新增编辑器植入
+
+- 前端 UI 改为 lit 组件形式
+
+- 解决已知问题
+
 ---
 
 **Made with ❤️ by miku_0410**
