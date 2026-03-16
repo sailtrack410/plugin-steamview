@@ -964,6 +964,7 @@ const je = ue`
     overflow-wrap: anywhere;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
+    min-height: 2.7em;
   }
 
   .game-meta {
