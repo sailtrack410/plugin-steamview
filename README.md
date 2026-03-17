@@ -7,8 +7,7 @@
 
 ## 🌐 演示与交流
 
-- **演示站点1**：[https://www.xhhao.com/](https://www.xhhao.com/)
-- **文档**：[https://docs.lik.cc/](https://docs.lik.cc/)
+- **演示站点1**：[https://www.sailtrack.cn/](https://www.sailtrack.cn/steamview)
 - **QQ 交流群**：[![QQ群](https://www.xhhao.com/upload/iShot_2025-03-03_16.03.00.png)](https://www.xhhao.com/upload/iShot_2025-03-03_16.03.00.png)
 
 ## ✨ 功能特性
@@ -20,7 +19,6 @@
   - 游戏名称本地化（支持中文）
 
 - 📊 **数据可视化**
-  - 环形图：Top 5 游戏时长占比
   - 统计卡片：两周内活跃度统计
   - 进度条：游戏时长占比可视化
   - 双进度条设计：总时长 + 两周时长
@@ -33,10 +31,8 @@
 
 - 🎨 **用户体验**
   - 响应式设计（支持桌面端、平板、移动端）
-  - 赛博朋克风格界面
   - 加载动画和成功提示
   - 返回首页按钮
-  - 分页显示（默认12个游戏，支持加载更多）
 
 - ⚙️ **配置管理**
   - Steam API Key 配置
@@ -44,7 +40,6 @@
   - 数据刷新频率设置
   - 隐藏游戏功能
   - 测试连接功能
-
 
 ## 🚀 快速开始
 
@@ -101,7 +96,7 @@ http://your-halo-domain/steamview
 
 1. **克隆项目**
    ```bash
-   git clone https://gitee.com/miku-0410/steam-view.git
+   git clone https://github.com/sailtrack410/plugin-steamview.git
    cd steam-view
    ```
 
