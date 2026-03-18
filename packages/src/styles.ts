@@ -301,8 +301,9 @@ export const steamGamesStyles = css`
   }
 
   .game-waterfall {
-    column-count: 4;
-    column-gap: 14px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
     margin-top: 12px;
   }
 
@@ -310,10 +311,7 @@ export const steamGamesStyles = css`
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    break-inside: avoid;
     box-shadow: var(--shadow-card);
-    display: inline-block;
-    margin: 0 0 14px;
     overflow: hidden;
     transition: border-color 150ms ease, box-shadow 150ms ease;
     width: 100%;
@@ -493,7 +491,7 @@ export const steamGamesStyles = css`
 
   @media (max-width: 1320px) {
     .game-waterfall {
-      column-count: 3;
+      grid-template-columns: repeat(3, 1fr);
     }
   }
 
@@ -505,7 +503,7 @@ export const steamGamesStyles = css`
 
   @media (max-width: 900px) {
     .game-waterfall {
-      column-count: 2;
+      grid-template-columns: repeat(2, 1fr);
     }
   }
 
@@ -544,7 +542,7 @@ export const steamGamesStyles = css`
     }
 
     .game-waterfall {
-      column-count: 1;
+      grid-template-columns: 1fr;
     }
   }
 

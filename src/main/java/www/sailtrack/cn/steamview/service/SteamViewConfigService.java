@@ -68,7 +68,13 @@ public class SteamViewConfigService {
         return getSettingValue(BASE_GROUP, PROXY_DOMAIN_API_KEY)
             .flatMap(value -> {
                 if (StringUtils.hasText(value)) {
-                    String domain = normalizeDomain(value, DEFAULT_API_DOMAIN);
+                    String trimmed = value.trim();
+                    // 支持完整 URL 格式（路径级代理）：https://proxy.example.com/path/https://api.steampowered.com
+                    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+                        return Mono.just(normalizeFullUrl(trimmed, DEFAULT_STEAM_API_BASE));
+                    }
+                    // 域名格式：api.steampowered.com
+                    String domain = normalizeDomain(trimmed, DEFAULT_API_DOMAIN);
                     return Mono.just("https://" + domain);
                 }
                 return getSettingValue(BASE_GROUP, STEAM_API_BASE_KEY)
@@ -81,7 +87,13 @@ public class SteamViewConfigService {
         return getSettingValue(BASE_GROUP, PROXY_DOMAIN_STORE_KEY)
             .flatMap(value -> {
                 if (StringUtils.hasText(value)) {
-                    String domain = normalizeDomain(value, DEFAULT_STORE_DOMAIN);
+                    String trimmed = value.trim();
+                    // 支持完整 URL 格式（路径级代理）
+                    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+                        return Mono.just(normalizeFullUrl(trimmed, DEFAULT_STEAM_STORE_BASE));
+                    }
+                    // 域名格式
+                    String domain = normalizeDomain(trimmed, DEFAULT_STORE_DOMAIN);
                     return Mono.just("https://" + domain);
                 }
                 return getSettingValue(BASE_GROUP, STEAM_STORE_BASE_KEY)
@@ -94,7 +106,13 @@ public class SteamViewConfigService {
         return getSettingValue(BASE_GROUP, PROXY_DOMAIN_COMMUNITY_KEY)
             .flatMap(value -> {
                 if (StringUtils.hasText(value)) {
-                    String domain = normalizeDomain(value, DEFAULT_COMMUNITY_DOMAIN);
+                    String trimmed = value.trim();
+                    // 支持完整 URL 格式（路径级代理）
+                    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+                        return Mono.just(normalizeFullUrl(trimmed, DEFAULT_STEAM_COMMUNITY_BASE));
+                    }
+                    // 域名格式
+                    String domain = normalizeDomain(trimmed, DEFAULT_COMMUNITY_DOMAIN);
                     return Mono.just("https://" + domain);
                 }
                 return Mono.just(DEFAULT_STEAM_COMMUNITY_BASE);
@@ -288,6 +306,19 @@ public class SteamViewConfigService {
 
         if (!normalized.startsWith("http://") && !normalized.startsWith("https://")) {
             return defaultValue;
+        }
+
+        return normalized;
+    }
+
+    private String normalizeFullUrl(String value, String defaultValue) {
+        if (!StringUtils.hasText(value)) {
+            return defaultValue;
+        }
+
+        String normalized = value.trim();
+        if (normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
         }
 
         return normalized;

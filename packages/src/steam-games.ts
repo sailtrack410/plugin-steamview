@@ -526,7 +526,7 @@ export class SteamGamesView extends LitElement {
                       <section id="steam-games-list" class="game-waterfall" aria-label="Steam 游戏瀑布流列表">
                         ${this.visibleGames.map(
                           (game, index) => html`
-                            <article class="game-card" style=${`--order:${index};`}>
+                            <article class="game-card">
                               <a
                                 class="cover-link"
                                 href=${`https://store.steampowered.com/app/${game.appId}`}

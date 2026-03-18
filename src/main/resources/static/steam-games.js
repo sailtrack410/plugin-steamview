@@ -907,8 +907,9 @@ const je = ue`
   }
 
   .game-waterfall {
-    column-count: 4;
-    column-gap: 14px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
     margin-top: 12px;
   }
 
@@ -916,10 +917,7 @@ const je = ue`
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    break-inside: avoid;
     box-shadow: var(--shadow-card);
-    display: inline-block;
-    margin: 0 0 14px;
     overflow: hidden;
     transition: border-color 150ms ease, box-shadow 150ms ease;
     width: 100%;
@@ -1099,7 +1097,7 @@ const je = ue`
 
   @media (max-width: 1320px) {
     .game-waterfall {
-      column-count: 3;
+      grid-template-columns: repeat(3, 1fr);
     }
   }
 
@@ -1111,7 +1109,7 @@ const je = ue`
 
   @media (max-width: 900px) {
     .game-waterfall {
-      column-count: 2;
+      grid-template-columns: repeat(2, 1fr);
     }
   }
 
@@ -1150,7 +1148,7 @@ const je = ue`
     }
 
     .game-waterfall {
-      column-count: 1;
+      grid-template-columns: 1fr;
     }
   }
 
@@ -1417,7 +1415,7 @@ let p = class extends M {
                       <section id="steam-games-list" class="game-waterfall" aria-label="Steam 游戏瀑布流列表">
                         ${this.visibleGames.map(
       (o, a) => u`
-                            <article class="game-card" style=${`--order:${a};`}>
+                            <article class="game-card">
                               <a
                                 class="cover-link"
                                 href=${`https://store.steampowered.com/app/${o.appId}`}
