@@ -108,10 +108,25 @@ public class SteamViewDataService {
                 : Mono.error(new IllegalStateException(errorMessage)));
     }
 
+    private static final long FAMILY_LIBRARY_MARKER = -1;
+
     private List<SteamRawGame> mergeSteamGames(List<SteamRawGame> owned, List<SteamRawGame> recent) {
         Map<String, SteamRawGame> merged = new LinkedHashMap<>();
         owned.forEach(game -> merged.put(game.appId(), game));
-        recent.forEach(game -> merged.putIfAbsent(game.appId(), game));
+        // 家庭库游戏（只存在于 recent 中）设置特殊标记
+        recent.forEach(game -> {
+            if (!merged.containsKey(game.appId())) {
+                // 创建家庭库游戏，rtimeLastPlayed 设为 -1 作为标记
+                SteamRawGame familyGame = new SteamRawGame(
+                    game.appId(),
+                    game.name(),
+                    game.playtimeForever(),
+                    game.playtime2weeks(),
+                    FAMILY_LIBRARY_MARKER
+                );
+                merged.put(game.appId(), familyGame);
+            }
+        });
         return new ArrayList<>(merged.values());
     }
 
@@ -152,6 +167,9 @@ public class SteamViewDataService {
     }
 
     private String formatLastPlayed(long lastPlayedEpoch) {
+        if (lastPlayedEpoch == FAMILY_LIBRARY_MARKER) {
+            return "家庭库";
+        }
         if (lastPlayedEpoch <= 0) {
             return "从未游玩";
         }
