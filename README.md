@@ -7,7 +7,7 @@
 
 ## 🌐 演示与交流
 
-- **演示站点1**：[https://www.sailtrack.cn/](https://www.sailtrack.cn/steamview)
+- **演示站点**：[https://www.sailtrack.cn/steamview](https://www.sailtrack.cn/steamview)
 - **QQ 交流群**：[![QQ群](https://www.xhhao.com/upload/iShot_2025-03-03_16.03.00.png)](https://www.xhhao.com/upload/iShot_2025-03-03_16.03.00.png)
 
 ## ✨ 功能特性
@@ -19,7 +19,7 @@
   - 游戏名称本地化（支持中文）
 
 - 📊 **数据可视化**
-  - 统计卡片：两周内活跃度统计
+  - 玩家资料卡片：头像、等级、徽章、XP
   - 进度条：游戏时长占比可视化
   - 双进度条设计：总时长 + 两周时长
 
@@ -30,22 +30,26 @@
   - 按最近游玩时间排序
 
 - 🎨 **用户体验**
-  - 响应式设计（支持桌面端、平板、移动端）
-  - 加载动画和成功提示
-  - 返回首页按钮
+  - 响应式 Grid 布局（支持桌面端、平板、移动端）
+  - 无限滚动自动加载
+  - 主题适配（亮色/暗色）
 
 - ⚙️ **配置管理**
   - Steam API Key 配置
   - Steam ID 配置
   - 数据刷新频率设置
   - 隐藏游戏功能
-  - 测试连接功能
+  - 代理域名支持（含路径级代理）
+
+- 📝 **编辑器嵌入**
+  - 支持 TipTap 编辑器扩展
+  - 可选择全部游戏或单个游戏渲染
 
 ## 🚀 快速开始
 
 ### 环境要求
 
-- Halo 2.21.0 或更高版本
+- Halo 2.22.0 或更高版本
 - Java 21+
 
 ### 安装方法
@@ -54,161 +58,28 @@
 
 1. 登录 Halo 后台
 2. 进入"插件" → "安装插件"
-3. 上传 `build/libs/pluginsteamview-1.0.0-SNAPSHOT.jar`
+3. 上传 `pluginsteamview-1.1.1.jar`
 4. 启用插件
 
 #### 方法2：手动安装
 
 1. 下载最新版本的 jar 文件
-2. 将 jar 文件复制到 Halo 的插件目录：
-   ```bash
-   cp pluginsteamview-1.0.0-SNAPSHOT.jar /path/to/halo/plugins/
-   ```
+2. 将 jar 文件复制到 Halo 的插件目录
 3. 重启 Halo
 
 ### 配置插件
 
-1. 进入 Halo 后台
-2. 进入"插件" → "Steam View" → "设置"
-3. 填写以下信息：
-   - **Steam API Key**: 在 [Steam API Key 申请页面](https://steamcommunity.com/dev/apikey) 获取
-   - **Steam ID**: 你的 Steam ID（17位数字），可以在 Steam 个人主页 URL 中找到
+1. 进入 Halo 后台 → 插件 → Steam View → 设置
+2. 填写 **Steam API Key**（[申请页面](https://steamcommunity.com/dev/apikey)）
+3. 填写 **Steam ID**（17位数字，在 Steam 个人主页 URL 中找到）
 4. 点击"测试 Steam 连接"验证配置
 5. 保存设置
 
 ### 访问插件
 
-配置完成后，访问以下地址查看你的 Steam 游戏数据：
-
 ```
 http://your-halo-domain/steamview
 ```
-
-## 🛠️ 开发
-
-### 环境要求
-
-- Java 21+
-- Node.js 18+
-- pnpm 10.12.4+
-
-### 开发步骤
-
-1. **克隆项目**
-   ```bash
-   git clone https://github.com/sailtrack410/plugin-steamview.git
-   cd steam-view
-   ```
-
-2. **安装前端依赖**
-   ```bash
-   cd ui
-   pnpm install
-   ```
-
-3. **启动开发服务器**
-   
-   在项目根目录启动 Halo 开发服务器：
-   ```bash
-   ./gradlew.bat haloServer
-   ```
-   
-   在 `ui` 目录启动前端开发服务器（新终端）：
-   ```bash
-   cd ui
-   pnpm dev
-   ```
-
-4. **访问应用**
-   ```
-   http://localhost:8090/console
-   http://localhost:8090/steamview
-   ```
-
-### 构建
-
-```bash
-# 构建整个项目
-./gradlew.bat build
-
-# 构建产物位置
-build/libs/pluginsteamview-1.0.0-SNAPSHOT.jar
-```
-
-### 开发命令
-
-```bash
-# 清理构建缓存
-./gradlew.bat clean
-
-# 构建项目
-./gradlew.bat build
-
-# 安装前端依赖
-cd ui && pnpm install
-
-# 开发前端
-cd ui && pnpm dev
-
-# 构建前端
-cd ui && pnpm build
-
-# 代码检查
-cd ui && pnpm lint
-
-# 类型检查
-cd ui && pnpm type-check
-```
-
-## 📦 项目结构
-
-```
-steam-view/
-├── src/main/
-│   ├── java/www/sailtrack/cn/steamview/
-│   │   ├── controller/          # 控制器层
-│   │   ├── service/             # 服务层
-│   │   ├── extension/           # Halo 插件扩展
-│   │   ├── SteamViewPlugin.java # 插件主类
-│   │   └── SteamViewRouter.java # 路由配置
-│   └── resources/
-│       ├── extensions/
-│       │   ├── settings.yaml    # 设置表单
-│       │   └── reverseProxy.yaml
-│       ├── static/              # 静态资源
-│       └── templates/           # 模板文件
-├── ui/
-│   ├── src/
-│   │   ├── assets/
-│   │   │   └── steamview.css   # 样式文件
-│   │   ├── views/
-│   │   │   └── Games.vue       # 控制台管理页面
-│   │   └── index.ts            # 入口文件
-│   └── package.json
-├── word/                        # 项目文档
-└── build.gradle
-```
-
-## 🛠️ 技术栈
-
-### 后端
-- Java 21
-- Spring Boot + WebFlux
-- Halo Plugin Framework 2.22.0
-- Lombok
-- Jackson
-
-### 前端
-- Vue 3.5.17
-- TypeScript 5.8.3
-- Vite 5.3.2
-- Chart.js 4.4.0
-- SCSS
-
-### 外部服务
-- Steam Web API
-- Steam Store API
-- Steam CDN
 
 ## ⚙️ 配置说明
 
@@ -216,76 +87,59 @@ steam-view/
 
 | 配置项 | 说明 | 必填 |
 |--------|------|------|
-| Steam API Key | Steam API 密钥，用于访问 Steam Web API | 是 |
-| Steam ID | 你的 Steam ID（17位数字） | 是 |
-| 数据刷新频率 | 自动刷新数据的频率（1小时/6小时/24小时） | 否 |
+| Steam API Key | Steam API 密钥 | 是 |
+| Steam ID | Steam ID（17位数字） | 是 |
+| 数据刷新频率 | 自动刷新频率（1h/6h/24h） | 否 |
 
-### 高级设置
+### 代理域名设置
 
-| 配置项 | 说明 |
-|--------|------|
-| 隐藏的游戏 | 添加要隐藏的游戏 App ID 列表 |
+支持两种格式：
+- **域名格式**: `api.steampowered.com`
+- **完整 URL**: `https://proxy.example.com/path/https://api.steampowered.com`
 
-## 📝 Steam API 使用说明
+### Steam ID 获取方法
 
-### 获取 Steam API Key
+1. 访问 Steam 个人主页，URL 格式：`https://steamcommunity.com/profiles/76561198000000000`，数字部分即 Steam ID
+2. 使用自定义 URL 的用户可通过 [Steam ID 查询工具](https://steamid.io/) 查询
 
-1. 访问 [Steam API Key 申请页面](https://steamcommunity.com/dev/apikey)
-2. 登录你的 Steam 账号
-3. 填写域名信息（可以随意填写，用于标识）
-4. 提交后即可获得 API Key
+## 🛠️ 开发
 
-### 获取 Steam ID
+```bash
+# 安装依赖
+pnpm install
 
-有几种方法可以获取 Steam ID：
+# 构建前端（修改 packages/ 后必须执行）
+cd packages && pnpm build
 
-1. **通过 Steam 个人主页**
-   - 访问你的 Steam 个人主页
-   - URL 格式：`https://steamcommunity.com/profiles/76561198000000000`
-   - 数字部分就是你的 Steam ID
+# 构建插件
+./gradlew build -x test -x pnpmCheck
 
-2. **通过自定义 URL**
-   - 如果你使用了自定义 URL，可以使用 [Steam ID 查询工具](https://steamid.io/)
-   - 输入你的自定义用户名，即可查询到 Steam ID
+# 产物位置
+build/libs/pluginsteamview-1.1.1.jar
+```
 
-3. **通过插件**
-   - 在插件设置中，输入你的 Steam 用户名
-   - 插件会自动解析出 Steam ID
+## 🛠️ 技术栈
 
-## 🤝 贡献
-
-欢迎贡献代码！请遵循以下步骤：
-
-1. Fork 本仓库
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启 Pull Request
-
-## 📄 许可证
-
-本项目采用 [GPL-3.0](./LICENSE) 许可证。
-
-## 👨‍💻 作者
-
-**miku_0410** - [Gitee](https://gitee.com/miku-0410)
-
-## 🙏 致谢
-
-- [Halo](https://github.com/halo-dev/halo) - 优秀的博客系统
-- [Steam](https://store.steampowered.com/) - 游戏平台
-- [Vue.js](https://vuejs.org/) - 渐进式 JavaScript 框架
-- [Chart.js](https://www.chartjs.org/) - 数据可视化库
-
-## 📮 反馈与支持
-
-如果你有任何问题或建议，欢迎通过以下方式联系：
-
-- 提交 [Issue](https://gitee.com/miku-0410/steam-view/issues)
-- 发送邮件
-- 加入讨论组
+- **后端**: Java 21, Spring Boot WebFlux, Halo Plugin Framework 2.22.0
+- **前端**: Vue 3, TypeScript, Lit (Web Components)
+- **外部服务**: Steam Web API, Steam Store API, Steam CDN
 
 ## 📜 更新日志
+
+### v1.1.1 (2026-03-18)
+
+- ✨ 支持路径级代理域名（完整 URL 格式）
+- ✨ 家庭库游戏显示"家庭库"标记
+- 🎨 游戏卡片布局改为 CSS Grid，按行排序
+- 📝 更新项目文档
+
+### v1.1.0 (2026-03-14)
+
+- ✨ 新增编辑器嵌入功能
+- 🎨 前端 UI 改为 Lit 组件形式
+- 🔧 重构整体代码架构
+- 📝 新增代理域名配置选项
+- 🐛 解决已知问题
 
 ### v1.0.0 (2026-01-16)
 
@@ -294,39 +148,26 @@ steam-view/
 - 📊 支持游戏时长统计和可视化
 - 🌍 支持家庭库游戏
 - 🇨🇳 支持游戏名称本地化（中文）
-- 🎨 赛博朋克风格界面
 - 📱 响应式设计
 
-### v1.1.0 (2026-03-14)
+## 🤝 贡献
 
-- 在reverseProxy.yaml中添加了控制台管理路径
+欢迎提交 Issue 和 Pull Request。
 
-- 更新了app.ts中的API端点以获取游戏数据
+## 📄 许可证
 
-- 在README.md中将HomeView.vue重命名为Games.vue以提高清晰度
+本项目采用 [GPL-3.0](./LICENSE) 许可证。
 
-- 改进了SteamViewPlugin.java中的日志记录以处理插件生命周期事件
+## 👨‍💻 作者
 
-- 更新了plugin.yaml，包含正确的主页URL和描述
+**sailtrack410** - [GitHub](https://github.com/sailtrack410)
 
-- 重构了roleTemplates.yaml以定义Steam View的新角色
+**Handsome**
 
-- 在settings.yaml中添加了额外的配置选项以设置代理设置
+## 📮 反馈与支持
 
-- 简化了GameCacheService.java以优化缓存管理
-
-- 改进了SteamViewConfigService.java以处理隐藏游戏和代理配置
-
-- 更新了SteamApiService.java以支持API请求的代理设置
-
-- 重构了整体代码设计
-
-- 新增编辑器植入
-
-- 前端 UI 改为 lit 组件形式
-
-- 解决已知问题
+- 提交 [Issue](https://github.com/sailtrack410/plugin-steamview/issues)
 
 ---
 
-**Made with ❤️ by miku_0410**
+**Made with ❤️ by sailtrack410 & Handsome**
