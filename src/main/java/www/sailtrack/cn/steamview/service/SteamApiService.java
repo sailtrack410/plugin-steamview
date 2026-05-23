@@ -86,6 +86,33 @@ public class SteamApiService {
         return String.format("https://cdn.cloudflare.steamstatic.com/steam/apps/%s/header.jpg", appId);
     }
 
+    public Mono<String> resolveCoverUrl(String appId) {
+        return configService.getSteamCoverMirror()
+            .map(mirror -> configService.resolveMirrorUrl(getGameCoverUrl(appId), mirror))
+            .defaultIfEmpty(getGameCoverUrl(appId));
+    }
+
+    public Mono<SteamPlayerInfo> resolveAvatarUrls(SteamPlayerInfo playerInfo) {
+        if (playerInfo == null || !StringUtils.hasText(playerInfo.avatar())) {
+            return Mono.justOrEmpty(playerInfo);
+        }
+        return configService.getSteamAvatarMirror()
+            .map(mirror -> new SteamPlayerInfo(
+                playerInfo.steamId(),
+                playerInfo.personaName(),
+                playerInfo.profileUrl(),
+                configService.resolveMirrorUrl(playerInfo.avatar(), mirror),
+                configService.resolveMirrorUrl(playerInfo.avatarMedium(), mirror),
+                configService.resolveMirrorUrl(playerInfo.avatarFull(), mirror),
+                playerInfo.level(),
+                playerInfo.badgeCount(),
+                playerInfo.playerXp(),
+                playerInfo.xpToNextLevel(),
+                playerInfo.badges()
+            ))
+            .defaultIfEmpty(playerInfo);
+    }
+
     public Mono<List<SteamRawGame>> getRecentlyPlayedGames(String apiKey, String steamId) {
         String path = String.format(
             "/IPlayerService/GetRecentlyPlayedGames/v0001/?key=%s&steamid=%s&format=json",

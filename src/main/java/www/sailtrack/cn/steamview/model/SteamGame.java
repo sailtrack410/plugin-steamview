@@ -61,4 +61,20 @@ public record SteamGame(
             active
         );
     }
+
+    public SteamGame withCoverUrl(String newCoverUrl) {
+        return new SteamGame(
+            appId,
+            name,
+            newCoverUrl,
+            totalTime,
+            twoWeekTime,
+            totalPercent,
+            twoWeekPercent,
+            lastPlayed,
+            lastPlayedAt,
+            hidden,
+            active
+        );
+    }
 }

@@ -76,6 +76,16 @@ spec:
           value: api.steampowered.com
           help: 可填写你的反向代理域名，例如 steam-api.example.com
         - $formkit: text
+          name: proxyDomainAvatar
+          label: 头像镜像域名
+          value: avatars.steamstatic.com
+          help: 可填写你的图片镜像域名，例如 steam-avatars.example.com
+        - $formkit: text
+          name: proxyDomainCover
+          label: 游戏封面镜像域名
+          value: cdn.cloudflare.steamstatic.com
+          help: 可填写你的图片镜像域名，例如 steam-covers.example.com
+        - $formkit: text
           name: proxyDomainStore
           label: Store 域名
           value: store.steampowered.com

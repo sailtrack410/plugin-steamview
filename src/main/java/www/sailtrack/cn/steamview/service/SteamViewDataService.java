@@ -41,13 +41,15 @@ public class SteamViewDataService {
     public Mono<SteamPublicGamesResponse> getPublicGames() {
         return getCachedOrFetchData(SYSTEM_INGESTED_BY)
             .flatMap(data -> configService.getHiddenGames()
-                .map(hiddenGames -> toPublicResult(data, Set.copyOf(hiddenGames))));
+                .map(hiddenGames -> toPublicResult(data, Set.copyOf(hiddenGames))))
+            .flatMap(this::applyMirrorUrls);
     }
 
     public Mono<SteamConsoleGamesResponse> listConsoleGames(SteamConsoleQuery query, String ingestedBy) {
         return getCachedOrFetchData(ingestedBy)
             .flatMap(data -> configService.getHiddenGames()
-                .map(hiddenGames -> toConsoleResult(data, Set.copyOf(hiddenGames), query)));
+                .map(hiddenGames -> toConsoleResult(data, Set.copyOf(hiddenGames), query)))
+            .flatMap(this::applyMirrorUrls);
     }
 
     public Mono<SteamCacheSnapshot> refreshGames(String ingestedBy) {
@@ -64,6 +66,44 @@ public class SteamViewDataService {
                     games.size()
                 )))
             .onErrorResume(error -> Mono.just(new SteamConnectionResult(false, error.getMessage(), null)));
+    }
+
+    private Mono<SteamPublicGamesResponse> applyMirrorUrls(SteamPublicGamesResponse response) {
+        return steamApiService.resolveAvatarUrls(response.player())
+            .flatMap(player -> {
+                List<SteamGame> games = response.games();
+                if (games.isEmpty()) {
+                    return Mono.just(new SteamPublicGamesResponse(games, response.stats(), player, response.lastUpdated()));
+                }
+                return Flux.fromIterable(games)
+                    .flatMap(game -> steamApiService.resolveCoverUrl(game.appId())
+                        .map(url -> game.withCoverUrl(url))
+                        .defaultIfEmpty(game))
+                    .collectList()
+                    .map(list -> new SteamPublicGamesResponse(list, response.stats(), player, response.lastUpdated()));
+            });
+    }
+
+    private Mono<SteamConsoleGamesResponse> applyMirrorUrls(SteamConsoleGamesResponse response) {
+        return steamApiService.resolveAvatarUrls(response.player())
+            .flatMap(player -> {
+                List<SteamGame> games = response.items();
+                if (games.isEmpty()) {
+                    return Mono.just(new SteamConsoleGamesResponse(
+                        games, response.page(), response.size(), response.total(),
+                        response.stats(), response.summary(), response.lastUpdated(),
+                        response.ingestedBy(), player));
+                }
+                return Flux.fromIterable(games)
+                    .flatMap(game -> steamApiService.resolveCoverUrl(game.appId())
+                        .map(url -> game.withCoverUrl(url))
+                        .defaultIfEmpty(game))
+                    .collectList()
+                    .map(list -> new SteamConsoleGamesResponse(
+                        list, response.page(), response.size(), response.total(),
+                        response.stats(), response.summary(), response.lastUpdated(),
+                        response.ingestedBy(), player));
+            });
     }
 
     private Mono<SteamCacheSnapshot> getCachedOrFetchData(String ingestedBy) {
