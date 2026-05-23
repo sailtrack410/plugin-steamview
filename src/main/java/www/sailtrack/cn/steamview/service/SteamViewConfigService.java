@@ -32,6 +32,8 @@ public class SteamViewConfigService {
     private static final String PROXY_DOMAIN_API_KEY = "proxyDomainApi";
     private static final String PROXY_DOMAIN_STORE_KEY = "proxyDomainStore";
     private static final String PROXY_DOMAIN_COMMUNITY_KEY = "proxyDomainCommunity";
+    private static final String PROXY_DOMAIN_AVATAR_KEY = "proxyDomainAvatar";
+    private static final String PROXY_DOMAIN_COVER_KEY = "proxyDomainCover";
     private static final String STEAM_API_BASE_KEY = "steamApiBase";
     private static final String STEAM_STORE_BASE_KEY = "steamStoreBase";
 
@@ -41,6 +43,8 @@ public class SteamViewConfigService {
     private static final String DEFAULT_API_DOMAIN = "api.steampowered.com";
     private static final String DEFAULT_STORE_DOMAIN = "store.steampowered.com";
     private static final String DEFAULT_COMMUNITY_DOMAIN = "steamcommunity.com";
+    private static final String DEFAULT_AVATAR_CDN_DOMAIN = "avatars.steamstatic.com";
+    private static final String DEFAULT_COVER_CDN_DOMAIN = "cdn.cloudflare.steamstatic.com";
     private final ReactiveSettingFetcher settingFetcher;
     private final ReactiveExtensionClient extensionClient;
     private final ObjectMapper objectMapper;
@@ -118,6 +122,90 @@ public class SteamViewConfigService {
                 return Mono.just(DEFAULT_STEAM_COMMUNITY_BASE);
             })
             .defaultIfEmpty(DEFAULT_STEAM_COMMUNITY_BASE);
+    }
+
+    public Mono<String> getSteamAvatarMirror() {
+        return getSettingValue(BASE_GROUP, PROXY_DOMAIN_AVATAR_KEY)
+            .defaultIfEmpty("");
+    }
+
+    public Mono<String> getSteamCoverMirror() {
+        return getSettingValue(BASE_GROUP, PROXY_DOMAIN_COVER_KEY)
+            .defaultIfEmpty("");
+    }
+
+    public Mono<String> resolveAvatarUrl(String originalUrl) {
+        if (!StringUtils.hasText(originalUrl)) {
+            return Mono.just("");
+        }
+        return getSteamAvatarMirror()
+            .map(mirror -> resolveMirrorUrl(originalUrl, mirror))
+            .defaultIfEmpty(originalUrl);
+    }
+
+    public Mono<String> resolveCoverUrl(String originalUrl) {
+        if (!StringUtils.hasText(originalUrl)) {
+            return Mono.just("");
+        }
+        return getSteamCoverMirror()
+            .map(mirror -> resolveMirrorUrl(originalUrl, mirror))
+            .defaultIfEmpty(originalUrl);
+    }
+
+    public String resolveMirrorUrl(String originalUrl, String mirrorValue) {
+        if (!StringUtils.hasText(originalUrl)) {
+            return originalUrl;
+        }
+        if (!StringUtils.hasText(mirrorValue)) {
+            return originalUrl;
+        }
+
+        String trimmed = mirrorValue.trim();
+
+        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+            String normalized = trimmed.endsWith("/") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
+            String originalPath = "";
+            try {
+                URI uri = URI.create(originalUrl);
+                originalPath = uri.getRawPath();
+                if (StringUtils.hasText(uri.getRawQuery())) {
+                    originalPath += "?" + uri.getRawQuery();
+                }
+            } catch (Exception ignored) {
+                return originalUrl;
+            }
+            return normalized + originalPath;
+        }
+
+        try {
+            URI uri = URI.create(originalUrl);
+            String originalScheme = uri.getScheme();
+            if (originalScheme == null) {
+                originalScheme = "https";
+            }
+            String host = trimmed;
+            int colonIndex = host.indexOf(':');
+            int port = -1;
+            if (colonIndex > -1) {
+                try {
+                    port = Integer.parseInt(host.substring(colonIndex + 1));
+                    host = host.substring(0, colonIndex);
+                } catch (NumberFormatException ignored) {
+                }
+            }
+            StringBuilder sb = new StringBuilder();
+            sb.append(originalScheme).append("://").append(host);
+            if (port > 0) {
+                sb.append(':').append(port);
+            }
+            sb.append(uri.getRawPath());
+            if (StringUtils.hasText(uri.getRawQuery())) {
+                sb.append('?').append(uri.getRawQuery());
+            }
+            return sb.toString();
+        } catch (Exception ignored) {
+            return originalUrl;
+        }
     }
 
     public Mono<List<String>> getHiddenGames() {
